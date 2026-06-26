@@ -7,36 +7,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Login a DockerHub
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      # Configurar credenciales AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Build image
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest .
 
-      # Push a DockerHub
       - name: Push to DockerHub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/user-service:latest
 
-      # Tag y Push a ECR
       - name: Tag image for ECR
         run: docker tag ${{ secrets.DOCKER_USERNAME }}/user-service:latest ${{ steps.login-ecr.outputs.registry }}/user-service:latest
 
